@@ -25,7 +25,7 @@ document.querySelector('button.add_new').addEventListener('click', function(e) {
         let goods = JSON.parse(localStorage.getItem('goods'))
         goods.push(['good_'+goods.length, name, price, count, 0, 0, 0])
         localStorage.setItem('goods', JSON.stringify(goods))
-        //TODO: update_goods()
+        update_goods()
         myModal.hide() //Galiausiai modulinis langas yra paslėptas naudojant "myModal.hide()" metodą, ir vartotojas yra grąžinamas į pagrindinį puslapį.
     } else {
         Swal.fire({ // Jei bent vienas laukas nėra užpildytas, atsiranda pranešimas apie klaidą naudojant "SweetAlert" biblioteką. Tai padeda vartotojui
@@ -36,3 +36,58 @@ document.querySelector('button.add_new').addEventListener('click', function(e) {
         })
     }
 })
+
+update_goods ()
+
+function update_goods () {
+    let result_price = 0; // sukuriamas kintamasis result_price ir jam priskiriama reikšmė 0.
+    let tbody = document.querySelector('.list'); //sukuriamas kintamasis tbody ir jam priskiriama reikšmė rasti elementą su klase 'list'.
+    tbody.innerHTML = ""; // išvalomas kintamojo tbody turinys.
+    document.querySelector('.cart').innerHTML = ""; //išvalomas elementas su klase 'cart'.
+    let goods = JSON.parse(localStorage.getItem('goods')); //sukuriamas kintamasis goods ir jam priskiriama reikšmė gauta iš local
+                                                            //  storage elemento 'goods' ir paversta iš JSON formato į objektą.
+    if(goods.length) { // jei goods objektas netuščias, vykdoma ši sąlyga.
+        table1.hidden = false; //rodomas elementas su id 'table1'.
+        table2.hidden  = false;
+        for( let i=0; i < goods.length; i++) { //pradedamas ciklas per visus goods objekto elementus.
+            tbody.insertAdjacentHTML('beforeend', //į kintamojo tbody turinį įdedama HTML eilutė.
+            `
+           <tr class="align-middle">
+            <td>${i+1}</td> 
+            <td class="name">${goods[i][1]}</td>
+            <td class="price">${goods[i][2]}</td>
+            <td>${goods[i][3]}</td>
+            <td><button class="good_delete btn btn-danger" data-delete="${goods[i][0]}">&#10006;</button> </td>
+            <td><button class="good_delete btn btn-primary" data-goods="${goods[i][0]}">&#10149;</button> </td>
+           </tr>
+           `
+        //   ${i+1} - iteracijos numeris padidintas vienetu. //${goods[i][1]} - objekto elemento savybė, kurios raktas yra 1.
+// ${goods[i][2]} - objekto elemento savybė, kurios raktas yra 2. // ${goods[i][3]} - objekto elemento savybė, kurios raktas yra 3.
+// <button class="good_delete btn btn-danger" data-delete="${goods[i][0]}">&#10006;</button> - mygtukas, skirtas ištrinti objektą, jo reikšmė yra objekto elemento savybė, kurios raktas yra 0.
+// <button class="good_delete btn btn-primary" data-goods="${goods[i][0]}">&#10149;</button> - mygtukas, skirtas atnaujinti objektą, jo reikšmė yra objekto elemento savybė, kurios raktas yra 0.
+
+            );
+            if(goods[i][4] > 0) { // jei objekto elemento savybė, kurios raktas yra 4, yra didesnė už 0, vykdom
+                goods[i][6] = goods [i][4]*goods[i][2] - goods[i][4]*goods[i][2]*goods[i][5]*0.01; //Skaičiuojama prekių kaina su nuolaida, kuri yra nustatyta kaip prekės elemento savybė (raktas 5) procentų dydis.
+                result_price += goods[i][6] ; //Apskaičiuota prekių kaina pridedama prie bendros kainos (result_price).
+            document.querySelector('.cart').insertAdjacentHTML('beforeend', //Sukuriamas naujas eilutės elementas (tr) krepšelio lentelėje su informacija apie prekę ir jos kainą
+           ` 
+         <tr class="align-middle">
+            <td>${i+1}</td>
+            <td class="price_name">${goods[i][1]}</td>
+            <td class="price_one">${goods[i][2]}</td>
+            <td class="price_count">${goods[i][4]}</td>
+            <td class="price_discount"><input data-goodId="$(goods[i][0]" type="text" value="${goods[i][5]}" min="0" max="100"></input> </td>
+            <td>&{goods[i][6]}</td>
+            <td><button class="good_delete  btn btn-danger" data-goods="${goods[i][0]}"> &#10149; </button> </td>
+           </tr>`
+            ) ;
+             }
+        } 
+        //userList = new List('goods', options);
+    }   else { //Priešingu atveju (jei nėra prekių užsakymų), lentelės yra paslėptos.
+            table1.hidden = true 
+            table2.hidden = true
+        }
+    document.querySelector('.price_result').innerHTML = result_price + '*&#8364;' //naudojama, kad atnaujintų kainą puslapio apačioje (kuri rodo bendrą krepšelio kainą). Jis pakeičia šio elemento HTML turinį į atnaujintą kainą
+}
