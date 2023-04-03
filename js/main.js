@@ -73,7 +73,7 @@ function update_goods () {
 // <button class="good_delete btn btn-primary" data-goods="${goods[i][0]}">&#10149;</button> - mygtukas, skirtas atnaujinti objektą, jo reikšmė yra objekto elemento savybė, kurios raktas yra 0.
 
             );
-            if(goods[i][4] > 0) { // jei objekto elemento savybė, kurios raktas yra 4, yra didesnė už 0, vykdom
+            if(goods[i][4]>0) { // jei objekto elemento savybė, kurios raktas yra 4, yra didesnė už 0, vykdom
                 goods[i][6] = goods [i][4]*goods[i][2] - goods[i][4]*goods[i][2]*goods[i][5]*0.01; //Skaičiuojama prekių kaina su nuolaida, kuri yra nustatyta kaip prekės elemento savybė (raktas 5) procentų dydis.
                 result_price += goods[i][6] ; //Apskaičiuota prekių kaina pridedama prie bendros kainos (result_price).
             document.querySelector('.cart').insertAdjacentHTML('beforeend', //Sukuriamas naujas eilutės elementas (tr) krepšelio lentelėje su informacija apie prekę ir jos kainą
@@ -83,10 +83,11 @@ function update_goods () {
             <td class="price_name">${goods[i][1]}</td>
             <td class="price_one">${goods[i][2]}</td>
             <td class="price_count">${goods[i][4]}</td>
-            <td class="price_discount"><input data-goodId="$(goods[i][0]" type="text" value="${goods[i][5]}" min="0" max="100"></input> </td>
-            <td>&{goods[i][6]}</td>
-            <td><button class="good_delete  btn btn-danger" data-goods="${goods[i][0]}"> &#10149; </button> </td>
-           </tr>`
+            <td class="price_discount"><input data-goodId="${goods[i][0]}" type="text" value="${goods[i][5]}" min="0" max="100"></td>
+            <td>${goods[i][6]}</td>
+            <td><button class="good_delete  btn btn-danger" data-delete="${goods[i][0]}"> &#10149; </button> </td>
+           </tr>
+           `
             ) ;
              }
         } 
@@ -129,4 +130,34 @@ document.querySelector('.list').addEventListener('click', function(e) { //functi
             )
         }
     })
+})
+
+document.querySelector('.list').addEventListener('click', function(e) { // funkcija yra priskirta click event'ui ant HTML elemento su klase list
+    if(!e.target.dataset.goods) { 
+        return
+    }
+    let goods = JSON.parse(localStorage.getItem('goods')) ////Sukuriamas kintamasis "goods", kuriam priskiriamas prekių sąrašas, saugomas "localStorage".
+    for(let i=0; i<goods.length; i++) {
+        if(goods[i][3]>0 && goods[i][0] == e.target.dataset.goods) {
+           goods[i].splice(3,1,goods[i][3]-1) //Funkcija eina per prekių sąrašą ir ieško prekės, kurios kiekis yra daugiau nei 0 ir kurios ID sutampa su atributu "data-goods" spustelėtame HTML elemente. Jei toks elementas yra rastas, jo kiekis yra sumažinamas vienetu, o krepšelio kiekis padidinamas vienetu.
+           goods[i].splice(4,1,goods[i][4]+1)
+           localStorage.setItem('goods', JSON.stringify(goods))
+           update_goods()
+        }
+    }
+})
+
+document.querySelector('.cart').addEventListener('click', function(e) { 
+    if(!e.target.dataset.delete) { 
+        return
+    }
+    let goods = JSON.parse(localStorage.getItem('goods')) 
+    for(let i=0; i<goods.length; i++) {
+        if(goods[i][4]>0 && goods[i][0] == e.target.dataset.delete) {
+           goods[i].splice(3,1, goods[i][3]+1) 
+           goods[i].splice(4,1, goods[i][4]-1)
+           localStorage.setItem('goods', JSON.stringify(goods))
+           update_goods()
+        }
+    }
 })
