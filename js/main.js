@@ -8,6 +8,12 @@ let myModal = new bootstrap.Modal(document.getElementById('exampleModal'), {
     //  "Pridėti naują prekę". Tai yra Bootstrap modulis, kuris yra naudojamas naudoti kai kuriuos elementus, pavyzdžiui, modalinius langus.
 })
 
+let options = {
+    valueNames: ['name', 'price']
+}
+
+let userList
+
 document.querySelector('button.add_new').addEventListener('click', function(e) { //priskiriamas reakcijos įvykis vartotojo paspaudimui ant mygtuko "Pridėti 
     // naują prekę". Kai šis mygtukas yra paspaudžiamas, JavaScript renka įvesties laukų duomenis. Tai daroma naudojant "document.getElementById()" metodą 
     // ir priskiriant atitinkamų įvesties laukų reikšmes kintamiesiems "name", "price" ir "count".
@@ -84,10 +90,43 @@ function update_goods () {
             ) ;
              }
         } 
-        //userList = new List('goods', options);
+        userList = new List('goods', options);
     }   else { //Priešingu atveju (jei nėra prekių užsakymų), lentelės yra paslėptos.
             table1.hidden = true 
             table2.hidden = true
         }
     document.querySelector('.price_result').innerHTML = result_price + '*&#8364;' //naudojama, kad atnaujintų kainą puslapio apačioje (kuri rodo bendrą krepšelio kainą). Jis pakeičia šio elemento HTML turinį į atnaujintą kainą
 }
+
+document.querySelector('.list').addEventListener('click', function(e) { //function(e) - tai įvykio klausytojo funkcija, kuri yra vykdoma, kai vartotojas 
+    // paspaudžia .list elementą. Funkcijos parametras e yra įvykio objektas, kuris turi informaciją apie paspaudimo įvykį.
+    if(!e.target.dataset.delete) { // ši eilutė patikrina, ar paspaudimo įvykis buvo iškvietas ant elemento, turinčio  data-delete atributą. Jei toks atributas neegzistuoja, funkcija grąžina undefined reikšmę ir nutraukia vykdymą.
+        return
+    }
+    Swal.fire ({  //tai SweetAlert2 bibliotekos funkcija, kuri sukuria patvirtinimo dialogo langą. 
+        title: 'Attention',
+        text: 'Are you sure you want to delete?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes',
+        cancelButtonText: 'No',
+    }).then((result) => { // tai funkcija, kuri bus iškviesta po patvirtinimo dialogo lango uždarymo. Jos parametras result yra SweetAlert2 bibliotekos grąžinamas objektas, kuriame yra informacija apie vartotojo pasirinkimą dialogo lange.
+        if(result.isConfirmed) { //ši eilutė patikrina, ar vartotojas patvirtino operaciją paspaudęs mygtuką "Yes" dialogo lange. Jei taip, vykdoma kodo dalis, kuri ištrina pasirinktą prekę iš localStorage objekto ir atnaujina prekių sąrašą
+            let goods = JSON.parse(localStorage.getItem('goods'))
+            for(let i=0; i<goods.length; i++) {
+              if(goods[i][0] == e.target.dataset.delete)  {
+                goods.splice(i, 1) //ištrina vieną prekę iš goods masyvo, kurio indeksas yra i. splice() yra masyvo metodas, kuris leidžia iškelti vieną ar kelias elementų iš masyvo, t.y. pakeisti masyvą pačioje vietoje.
+                localStorage.setItem('goods', JSON.stringify(goods))
+                update_goods()
+              }
+            }
+            Swal.fire( //ši funkcija sukurią informacinį langą, kuri praneša, kad pasirinkta prekė buvo sėkmingai pašalinta.
+                "Removed",
+                "Selected product was successfully removed",
+                "success"
+            )
+        }
+    })
+})
