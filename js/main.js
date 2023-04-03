@@ -1,3 +1,40 @@
+table1.onclick = function(e) { //ši eilutė priskiria funkciją pirmajai lentelės ID (table1) paspaudimų įvykiui ant TH elementų.
+    if(e.target.tagName != 'TH') return //patikrina, ar paspausta ant TH elemento. Jei ne, funkcija baigia savo darbą.
+    let th = e.target //gauna elementą, kuris buvo paspaustas (th).
+    sortTable(th.cellIndex, th.dataset.type, 'table1') //iškviečia sortTable funkciją ir paduoda jai stulpelio numerį
+    // (th.cellIndex), stulpelio tipą (th.dataset.type) ir lentelės ID (table1).
+}
+
+table2.onclick = function(e) { 
+    if(e.target.tagName != 'TH') return
+    let th = e.target
+    sortTable(th.cellIndex, th.dataset.type, 'table2')
+}
+
+function sortTable(coLNum, type, id) { //apibrėžia sortTable funkciją, kuri yra skirta rikiuoti
+    // lentelės eilutes pagal pasirinktą stulpelį. Funkcijos parametrai yra stulpelio numeris (coLNum), stulpelio tipas (type) ir lentelės ID (id).
+    let elem = document.getElementById(id) //gauna HTML elementą su nurodytu ID.
+    let tbody = elem.querySelector('tbody') //gauna tbody elementą.
+    let rowsArray = Array.from(tbody.rows)  //sugeneruoja eilučių masyvą.
+    let compare //apibrėžia kintamąjį, kuris bus naudojamas palyginimo funkcijai.
+    switch(type) { // apibrėžia switch statement, kuris pagal stulpelio tipą (number arba string) nustato palyginimo funkciją (compare), kuri bus naudojama rikiavimo algoritme.
+        case 'number': //apibrėžia atvejį, kai stulpelio tipas yra 'number'. Palyginimo funkcija paima reikšmes iš palyginamų
+        // eilučių to stulpelio ir grąžina jų skirtumą. Tai naudojama sort() funkcijoje, kad galima būtų surikiuoti eilutes pagal skaitines reikšmes.
+            compare = function(rowA, rowB) {
+                return rowA.cells[coLNum].innerHTML - rowB.cells[coLNum].innerHTML
+            } //nustato palyginimo funkciją. Ji naudoja rowA ir rowB, kad palygintų dvi eilutes ir grąžintų jų skirtumą pagal pasirinktą stulpelį (coLNum).
+            break //nutraukia switch statement
+            case 'string': //apibrėžia atvejį, kai stulpelio tipas yra 'string'
+                compare = function(rowA, rowB) {
+                   return rowA.cells[coLNum].innerHTML > rowB.cells[coLNum].innerHTML ? 1 : -1 //nustato palyginimo funkciją.
+                    // Ji naudoja rowA ir rowB, kad palygintų dvi eilutes ir grąžintų jų skirtumą pagal pasirinktą stulpelį (coLNum).
+                }
+                break
+    }
+    rowsArray.sort(compare) //rikiuoja eilutes pagal palyginimo funkciją.
+    tbody.append(...rowsArray) //atnaujina lentelę su surikiuotomis eilutėmis.
+}
+
 if(!localStorage.getItem('goods')) {
     localStorage.setItem('goods',JSON.stringify([])) //Patikrina, ar jau yra duomenų laikmena "goods" lokaliojoje atmintyje. Jei nėra, tada ji 
     // sukuria tuščią masyvą ir išsaugo jį kaip JSON eilutę, naudojant "localStorage.setItem()" metodą. Tai yra vadinama lokaliosios atminties inicijavimu. 
@@ -83,7 +120,7 @@ function update_goods () {
             <td class="price_name">${goods[i][1]}</td>
             <td class="price_one">${goods[i][2]}</td>
             <td class="price_count">${goods[i][4]}</td>
-            <td class="price_discount"><input data-goodId="${goods[i][0]}" type="text" value="${goods[i][5]}" min="0" max="100"></td>
+            <td class="price_discount"><input data-goodid="${goods[i][0]}" type="text" value="${goods[i][5]}" min="0" max="100"></td>
             <td>${goods[i][6]}</td>
             <td><button class="good_delete  btn btn-danger" data-delete="${goods[i][0]}"> &#10149; </button> </td>
            </tr>
@@ -139,7 +176,8 @@ document.querySelector('.list').addEventListener('click', function(e) { // funkc
     let goods = JSON.parse(localStorage.getItem('goods')) ////Sukuriamas kintamasis "goods", kuriam priskiriamas prekių sąrašas, saugomas "localStorage".
     for(let i=0; i<goods.length; i++) {
         if(goods[i][3]>0 && goods[i][0] == e.target.dataset.goods) {
-           goods[i].splice(3,1,goods[i][3]-1) //Funkcija eina per prekių sąrašą ir ieško prekės, kurios kiekis yra daugiau nei 0 ir kurios ID sutampa su atributu "data-goods" spustelėtame HTML elemente. Jei toks elementas yra rastas, jo kiekis yra sumažinamas vienetu, o krepšelio kiekis padidinamas vienetu.
+           goods[i].splice(3,1,goods[i][3]-1) //Funkcija eina per prekių sąrašą ir ieško prekės, kurios kiekis yra daugiau nei 0 ir kurios ID sutampa su 
+        //    atributu "data-goods" spustelėtame HTML elemente. Jei toks elementas yra rastas, jo kiekis yra sumažinamas vienetu, o krepšelio kiekis padidinamas vienetu.
            goods[i].splice(4,1,goods[i][4]+1)
            localStorage.setItem('goods', JSON.stringify(goods))
            update_goods()
@@ -158,6 +196,27 @@ document.querySelector('.cart').addEventListener('click', function(e) {
            goods[i].splice(4,1, goods[i][4]-1)
            localStorage.setItem('goods', JSON.stringify(goods))
            update_goods()
+        }
+    }
+})
+
+document.querySelector('.cart').addEventListener('input', function(e) {  //prideda įvesties renginį ".cart" elementui ir apibrėžia funkciją, kuri vykdoma, kai įvestis keičiasi.
+    if(!e.target.dataset.goodid) { //patikrina, ar keičiamas elementas turi "goodid" duomenų atributą. Jei ne, funkcija nutraukia vykdymą.
+        return
+    }
+    let goods = JSON.parse(localStorage.getItem('goods')) //išsaugo prekių masyvą iš lokalaus atminties, naudodama "localStorage" API. 
+    for(let i=0; i<goods.length; i++) { 
+        if(goods[i][0] == e.target.dataset.goodid) {
+            goods[i][5] = e.target.value
+            goods[i][6] = goods [i][4]*goods[i][2] - goods[i][4]*goods[i][2]*goods[i][5]*0.01
+            localStorage.setItem('goods', JSON.stringify(goods))
+            update_goods()
+            let input = document.querySelector(`[data-goodId="${goods[i][0]}"]`)
+            input.focus()
+            input.selectionStart = input.value.lenght
+            // atnaujina prekių masyvą, kai prekės krepšelio elementas yra keičiamas. Funkcija ieško prekės pagal jos "goodid" atributą,
+            //  atnaujina jos kiekio reikšmę ir skaičiuoja naują kainą. Tada funkcija išsaugo atnaujintą prekių masyvą naudojant "localStorage"
+            //  API ir atnaujina krepšelio rodinį. Galiausiai, funkcija grąžina fokusą į pakeistą prekės kiekio įvesties laukelį.
         }
     }
 })
